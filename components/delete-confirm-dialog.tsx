@@ -13,14 +13,16 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { AlertTriangle } from "lucide-react"
 import type { Employee } from "@/types/employee"
+import { apiSend } from "@/lib/api"
 
 interface DeleteConfirmDialogProps {
   isOpen: boolean
   onClose: () => void
   employee: Employee | null
+  onSuccess?: () => void
 }
 
-export function DeleteConfirmDialog({ isOpen, onClose, employee }: DeleteConfirmDialogProps) {
+export function DeleteConfirmDialog({ isOpen, onClose, employee, onSuccess }: DeleteConfirmDialogProps) {
   const { toast } = useToast()
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -30,11 +32,7 @@ export function DeleteConfirmDialog({ isOpen, onClose, employee }: DeleteConfirm
     setIsDeleting(true)
 
     try {
-      const response = await fetch(`/api/employees/${employee.id}`, {
-        method: "DELETE",
-      })
-
-      if (!response.ok) throw new Error("Erreur lors de la suppression")
+      await apiSend(`/api/employees/${employee.id}`, "DELETE")
 
       toast({
         title: "Fiche supprimée",
@@ -42,11 +40,11 @@ export function DeleteConfirmDialog({ isOpen, onClose, employee }: DeleteConfirm
       })
 
       onClose()
-      window.location.reload()
+      if (onSuccess) onSuccess()
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer la fiche. Réessayez.",
+        description: error instanceof Error ? error.message : "Impossible de supprimer la fiche. Réessayez.",
         variant: "destructive",
       })
     } finally {

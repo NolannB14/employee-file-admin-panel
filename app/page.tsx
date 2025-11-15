@@ -16,6 +16,11 @@ export default function AdminPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+
+  const handleRefresh = () => {
+    setRefreshTrigger((prev) => prev + 1)
+  }
 
   const handleAddEmployee = () => {
     setSelectedEmployee(null)
@@ -79,16 +84,23 @@ export default function AdminPage() {
           onEdit={handleEditEmployee}
           onDelete={handleDeleteClick}
           onView={handleViewEmployee}
+          refreshTrigger={refreshTrigger}
         />
 
         {/* Employee Modal */}
-        <EmployeeModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} employee={selectedEmployee} />
+        <EmployeeModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          employee={selectedEmployee}
+          onSuccess={handleRefresh}
+        />
 
         {/* Delete Confirmation Dialog */}
         <DeleteConfirmDialog
           isOpen={isDeleteDialogOpen}
           onClose={() => setIsDeleteDialogOpen(false)}
           employee={employeeToDelete}
+          onSuccess={handleRefresh}
         />
       </div>
     </div>

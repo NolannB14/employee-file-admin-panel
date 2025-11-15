@@ -4,6 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
+.pnpm-debug.log
 
 # testing
 /coverage
@@ -11,10 +12,12 @@
 # next.js
 /.next/
 /.open-next/
+/.wrangler/
 /out/
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
@@ -26,8 +29,10 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
-.env
+.env*
+
+# Claude Code artifacts
+/.claude
 
 # vercel
 .vercel

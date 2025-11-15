@@ -1,7 +1,21 @@
-  main = ".open-next/worker.js"
-  name = "employee-admin-panel"
-  compatibility_date = "2025-10-30"
-  compatibility_flags = ["nodejs_compat"]
-  [assets]
-  directory = ".open-next/assets"
-  binding = "ASSETS"
+name = "employee-admin-panel"
+compatibility_date = "2025-10-30"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "demo_employees"
+database_id = "e568fc85-693e-4854-ae32-d1808558ccdc"
+
+[[r2_buckets]]
+binding = "PROFILE_PICTURES"
+bucket_name = "employee-profile-pictures"
+
+[env.preview]
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "demo_employees"
+database_id = "e568fc85-693e-4854-ae32-d1808558ccdc"
+
+[[env.preview.r2_buckets]]
+binding = "PROFILE_PICTURES"
+bucket_name = "employee-profile-pictures-preview"

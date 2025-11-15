@@ -9,14 +9,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import type { Employee } from "@/types/employee"
+import { apiSend, apiUpload } from "@/lib/api"
 
 interface EmployeeModalProps {
   isOpen: boolean
   onClose: () => void
   employee: Employee | null
+  onSuccess?: () => void
 }
 
-export function EmployeeModal({ isOpen, onClose, employee }: EmployeeModalProps) {
+export function EmployeeModal({ isOpen, onClose, employee, onSuccess }: EmployeeModalProps) {
   const { toast } = useToast()
   const [formData, setFormData] = useState({
     firstName: "",
@@ -29,6 +31,9 @@ export function EmployeeModal({ isOpen, onClose, employee }: EmployeeModalProps)
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
   useEffect(() => {
     if (employee) {
@@ -41,6 +46,7 @@ export function EmployeeModal({ isOpen, onClose, employee }: EmployeeModalProps)
         linkedin: employee.linkedin || "",
         avatarUrl: employee.avatarUrl || "",
       })
+      setPreviewUrl(employee.avatarUrl || null)
     } else {
       setFormData({
         firstName: "",
@@ -51,8 +57,10 @@ export function EmployeeModal({ isOpen, onClose, employee }: EmployeeModalProps)
         linkedin: "",
         avatarUrl: "",
       })
+      setPreviewUrl(null)
     }
     setErrors({})
+    setSelectedFile(null)
   }, [employee, isOpen])
 
   const validateForm = () => {
@@ -80,6 +88,37 @@ export function EmployeeModal({ isOpen, onClose, employee }: EmployeeModalProps)
     return Object.keys(newErrors).length === 0
   }
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setSelectedFile(file)
+
+    // Create preview URL
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const uploadProfilePicture = async (file: File): Promise<string | null> => {
+    try {
+      setIsUploadingImage(true)
+      const data = await apiUpload("/api/upload/profile-picture", file)
+      return data.url
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Impossible de télécharger l'image",
+        variant: "destructive",
+      })
+      return null
+    } finally {
+      setIsUploadingImage(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -88,16 +127,20 @@ export function EmployeeModal({ isOpen, onClose, employee }: EmployeeModalProps)
     setIsSubmitting(true)
 
     try {
+      let avatarUrl = formData.avatarUrl
+
+      // Upload profile picture if a new file was selected
+      if (selectedFile) {
+        const uploadedUrl = await uploadProfilePicture(selectedFile)
+        if (uploadedUrl) {
+          avatarUrl = uploadedUrl
+        }
+      }
+
       const url = employee ? `/api/employees/${employee.id}` : "/api/employees"
       const method = employee ? "PUT" : "POST"
 
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      })
-
-      if (!response.ok) throw new Error("Erreur lors de l'enregistrement")
+      const data = await apiSend(url, method, { ...formData, avatarUrl })
 
       toast({
         title: employee ? "Fiche mise à jour" : "Fiche créée",
@@ -105,11 +148,11 @@ export function EmployeeModal({ isOpen, onClose, employee }: EmployeeModalProps)
       })
 
       onClose()
-      window.location.reload()
+      if (onSuccess) onSuccess()
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Impossible d'enregistrer la fiche. Réessayez.",
+        description: error instanceof Error ? error.message : "Impossible d'enregistrer la fiche. Réessayez.",
         variant: "destructive",
       })
     } finally {
@@ -215,26 +258,39 @@ export function EmployeeModal({ isOpen, onClose, employee }: EmployeeModalProps)
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="avatarUrl">Photo de profil (URL)</Label>
-            <Input
-              id="avatarUrl"
-              type="url"
-              value={formData.avatarUrl}
-              onChange={(e) => handleChange("avatarUrl", e.target.value)}
-              placeholder="https://exemple.com/photo.jpg"
-            />
+            <Label htmlFor="profilePicture">Photo de profil</Label>
+            <div className="flex items-center gap-4">
+              {previewUrl && (
+                <img
+                  src={previewUrl}
+                  alt="Aperçu"
+                  className="h-20 w-20 rounded-full object-cover border-2 border-border"
+                />
+              )}
+              <Input
+                id="profilePicture"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                disabled={isUploadingImage}
+                className="flex-1"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              JPG, PNG, WebP ou GIF. Maximum 5MB.
+            </p>
           </div>
 
           <DialogFooter className="gap-2">
-            <Button type="button" variant="ghost" onClick={onClose}>
+            <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting || isUploadingImage}>
               Annuler
             </Button>
             <Button
               type="submit"
-              disabled={!isFormValid || isSubmitting}
+              disabled={!isFormValid || isSubmitting || isUploadingImage}
               className="bg-[#00B7D0] hover:bg-[#00A0B8] text-white"
             >
-              {isSubmitting ? "Enregistrement..." : "Enregistrer"}
+              {isSubmitting || isUploadingImage ? "Enregistrement..." : "Enregistrer"}
             </Button>
           </DialogFooter>
         </form>

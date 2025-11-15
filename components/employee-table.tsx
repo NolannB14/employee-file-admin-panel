@@ -9,15 +9,17 @@ import { MoreVertical, Eye, Pencil, Trash2, Mail, Phone } from "lucide-react"
 import { Spinner } from "@/components/ui/spinner"
 import { Alert } from "@/components/ui/alert"
 import type { Employee } from "@/types/employee"
+import { apiGet } from "@/lib/api"
 
 interface EmployeeTableProps {
   searchQuery: string
   onEdit: (employee: Employee) => void
   onDelete: (employee: Employee) => void
   onView: (employee: Employee) => void
+  refreshTrigger?: number
 }
 
-export function EmployeeTable({ searchQuery, onEdit, onDelete, onView }: EmployeeTableProps) {
+export function EmployeeTable({ searchQuery, onEdit, onDelete, onView, refreshTrigger }: EmployeeTableProps) {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -26,15 +28,13 @@ export function EmployeeTable({ searchQuery, onEdit, onDelete, onView }: Employe
 
   useEffect(() => {
     fetchEmployees()
-  }, [sortField, sortDirection])
+  }, [sortField, sortDirection, refreshTrigger])
 
   const fetchEmployees = async () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch(`/api/employees?sort=${sortField}:${sortDirection}`)
-      if (!response.ok) throw new Error("Erreur lors du chargement")
-      const data = await response.json()
+      const data = await apiGet(`/api/employees?sort=${sortField}:${sortDirection}`)
       setEmployees(data)
     } catch (err) {
       setError("Impossible de charger les employés. Réessayez.")
