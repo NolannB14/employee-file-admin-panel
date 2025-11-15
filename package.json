@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "pages:dev": "wrangler pages dev out --compatibility-date=2025-10-30",
     "pages:deploy": "wrangler pages deploy out --project-name employee-admin-panel",
-    "preview": "npm run build:prod && npm run pages:dev",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {

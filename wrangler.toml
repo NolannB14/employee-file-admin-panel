@@ -1,5 +1,12 @@
+main = ".open-next/worker.js"
 name = "employee-admin-panel"
 compatibility_date = "2025-10-30"
+
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
 
 [[d1_databases]]
 binding = "DB"
