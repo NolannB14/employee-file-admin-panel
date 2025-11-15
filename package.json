@@ -7,6 +7,7 @@
     "dev:mock": "NEXT_PUBLIC_USE_MOCK_DATA=true next dev",
     "build": "next build",
     "build:prod": "NEXT_PUBLIC_USE_MOCK_DATA=false next build",
+    "cf:build": "opennextjs-cloudflare build",
     "lint": "eslint .",
     "pages:dev": "wrangler pages dev out --compatibility-date=2025-10-30",
     "pages:deploy": "wrangler pages deploy out --project-name employee-admin-panel",
